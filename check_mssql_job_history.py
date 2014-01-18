@@ -19,11 +19,11 @@ import pymssql
 # 3 - Unknown
 def nagios_exit(exit_type, msg):
     try:
-        exit_code=int(exit_type)
+        exit_code = int(exit_type)
         if exit_code < 0 or exit_code > 2:
             exit_code = 3
     except ValueError:
-        exit_code=3
+        exit_code = 3
 
     if exit_code == 0:
         status = "OK"
@@ -42,29 +42,79 @@ def run_datetime(run_date, run_time):
     run_date = str(run_date)
     run_time = str("%06d" % (int(run_time)))
 
-    run_year = run_date[0:4]
-    run_month = run_date[4:6]
-    run_day = run_date[6:8]
-    run_hour = run_time[0:2]
+    run_year   = run_date[0:4]
+    run_month  = run_date[4:6]
+    run_day    = run_date[6:8]
+    run_hour   = run_time[0:2]
     run_minute = run_time[2:4]
     run_second = run_time[4:6]
 
     return "%s/%s/%s %s:%s:%s" % (run_month, run_day, run_year, run_hour, run_minute, run_second)
 
 
-parser = argparse.ArgumentParser(description="Check a SQL Server for failed jobs - results based on state of last run for all jobs or for a specific job if specified")
-parser.add_argument("-t", "--timeout", action="store", type=int, help="Timeout for connection and login in seconds", default="60", dest="timeout")
-parser.add_argument("--query-timeout", action="store", type=int, help="Query timeout in seconds", default="60", dest="query_timeout")
-parser.add_argument("-w", "--warning", action="store", type=int, help="Failed jobs before a warning alert is generated", default="0", dest="warning")
-parser.add_argument("-c", "--critical", action="store", type=int, help="Failed jobs before a critical alert is generated", default="1", dest="critical")
-parser.add_argument("-H", "--host", action="store", help="Host name or IP address to connect to", required=True, dest="host")
-parser.add_argument("-p", "--port", action="store", type=int, help="SQL Server port number (only change if you know you need to)", default=1433, dest="port")
-parser.add_argument("-U", "--user", action="store", help="User name to connect as (does not support Windows built in or Active Directory accounts)", required=True, dest="user")
-parser.add_argument("-P", "--password", action="store", help="Password to for user you are authenticating as", required=True, dest="password")
-parser.add_argument("-j", "--job", action="store", help="A comma seperate list of jobs to check instead of all enabled jobs", dest="job");
-parser.add_argument("-x", "--exclude", action="store", help="A comma seperated list of jobs not to check", dest="exclude");
-parser.add_argument("-l", "--list", action="store_true", help="This will list all jobs in on your server. This does not return a nagios check and is used for setup and debugging", dest="list_jobs")
-parser.add_argument("-v", "--verbose", action="store_true", help="This shows the Transaction SQL code that will be executed to help debug", dest="verbose")
+parser = argparse.ArgumentParser(
+             description="Check a SQL Server for failed jobs - results based on state of last run for all jobs or for a specific job if specified")
+parser.add_argument("-t", "--timeout",
+                    action = "store",
+                    type = int, 
+                    help = "Timeout for connection and login in seconds",
+                    default = "60",
+                    dest = "timeout")
+parser.add_argument("--query-timeout",
+                    action = "store",
+                    type = int,
+                    help = "Query timeout in seconds",
+                    default = " 60",
+                    dest = "query_timeout")
+parser.add_argument("-w", "--warning",
+                    action = "store",
+                    type = int,
+                    help = "Failed jobs before a warning alert is generated",
+                    default = "0",
+                    dest = "warning")
+parser.add_argument("-c", "--critical",
+                    action = "store",
+                    type = int,
+                    help ="Failed jobs before a critical alert is generated",
+                    default = "1",
+                    dest = "critical")
+parser.add_argument("-H", "--host",
+                    action = "store",
+                    help = "Host name or IP address to connect to",
+                    required = True,
+                    dest = "host")
+parser.add_argument("-p", "--port",
+                    action = "store",
+                    type = int,
+                    help = "SQL Server port number (only change if you know you need to)",
+                    default = 1433,
+                    dest = "port")
+parser.add_argument("-U", "--user",
+                    action = "store",
+                    help = "User name to connect as (does not support Windows built in or Active Directory accounts)",
+                    required = True,
+                    dest = "user")
+parser.add_argument("-P", "--password",
+                    action = "store",
+                    help = "Password to for user you are authenticating as",
+                    required = True,
+                    dest = "password")
+parser.add_argument("-j", "--job",
+                    action = "store",
+                    help = "A comma seperate list of jobs to check instead of all enabled jobs",
+                    dest = "job");
+parser.add_argument("-x", "--exclude",
+                    action = "store",
+                    help = "A comma seperated list of jobs not to check",
+                    dest = "exclude");
+parser.add_argument("-l", "--list",
+                    action = "store_true",
+                    help = "This will list all jobs in on your server. This does not return a nagios check and is used for setup and debugging",
+                    dest = "list_jobs")
+parser.add_argument("-v", "--verbose",
+                    action = "store_true",
+                    help = "This shows the Transaction SQL code that will be executed to help debug",
+                    dest = "verbose")
 results = parser.parse_args()
 
 connect_host = results.host
@@ -72,7 +122,12 @@ if results.port != 1433:
     connect_host += ":%s" % (str(results.port))
 
 try:
-    conn = pymssql.connect(user = results.user, password = results.password, host = connect_host, timeout = results.query_timeout, login_timeout = results.timeout)
+    conn = pymssql.connect(
+               user = results.user,
+               password = results.password,
+               host = connect_host,
+               timeout = results.query_timeout,
+               login_timeout = results.timeout)
 except:
     nagios_exit(3, "Unable to connect to SQL Server")
 
