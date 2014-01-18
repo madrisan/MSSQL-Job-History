@@ -132,8 +132,8 @@ if args.list_jobs:
     cur.execute(tsql_cmd)
     rows = cur.fetchall()
 
-    print "Jobs on %s" % (args.host)
-    print "\"-\" at the begining means the job is disabled\n"
+    print "List of jobs on %s" % (args.host)
+    print "note that \"-\" at the begining means the job is disabled"
 
     for row in rows:
         if int(row[1]) == 1:
