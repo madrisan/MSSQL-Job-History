@@ -180,5 +180,3 @@ else:
         nagios_exit("OK", "%d failed jobs is below the warning count specified." % (rowcount))
     elif rowcount >= args.critical:
         nagios_exit("CRITICAL", failed_stats)
-    else:
-        nagios_exit(3, "This should never appear")
