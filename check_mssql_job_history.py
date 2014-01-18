@@ -13,29 +13,11 @@ import sys
 import argparse
 import pymssql
 
-# 0 - OK
-# 1 - Warning
-# 2 - Critical
-# 3 - Unknown
-def nagios_exit(exit_type, msg):
-    try:
-        exit_code = int(exit_type)
-        if exit_code < 0 or exit_code > 2:
-            exit_code = 3
-    except ValueError:
-        exit_code = 3
+nagios_retcodes = { "OK": 0, "WARNING": 1, "CRITICAL": 2, "UNKNOWN": 3 }
 
-    if exit_code == 0:
-        status = "OK"
-    elif exit_code == 1:
-        status = "WARNING"
-    elif exit_code == 2:
-        status = "CRITICAL"
-    else:
-        status = "UNKNOWN"
-
-    print "%s - %s" % (status, msg)
-    sys.exit(exit_code)
+def nagios_exit(return_code, msg):
+    print "%s - %s" % (return_code, msg)
+    sys.exit(nagios_retcodes[return_code])
 
     
 def run_datetime(run_date, run_time):
@@ -129,7 +111,7 @@ try:
                timeout = results.query_timeout,
                login_timeout = results.timeout)
 except:
-    nagios_exit(3, "Unable to connect to SQL Server")
+    nagios_exit("UNKNOWN", "Unable to connect to SQL Server")
 
 cur = conn.cursor()
 
@@ -185,7 +167,7 @@ rows = cur.fetchall()
 rowcount = cur.rowcount
 
 if rowcount == 0:
-    nagios_exit(0, "All jobs completed successfully on their last run")
+    nagios_exit("OK", "All jobs completed successfully on their last run")
 else:
     failed_stats = "Number of failed jobs: %d - Failed Jobs: " % (rowcount)
     for row in rows:
@@ -193,10 +175,10 @@ else:
     failed_stats = failed_stats.rstrip(', ')
 
     if rowcount >= results.warning and rowcount < results.critical:
-        nagios_exit(1, failed_stats)
+        nagios_exit("WARNING", failed_stats)
     elif rowcount < results.warning:
-        nagios_exit(0, "%d failed jobs is below the warning count specified." % (rowcount))
+        nagios_exit("OK", "%d failed jobs is below the warning count specified." % (rowcount))
     elif rowcount >= results.critical:
-        nagios_exit(2, failed_stats)
+        nagios_exit("CRITICAL", failed_stats)
     else:
         nagios_exit(3, "This should never appear")
