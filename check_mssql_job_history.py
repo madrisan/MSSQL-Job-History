@@ -148,13 +148,10 @@ AND [h].[run_status] = 0"""
 
 if args.job:
     tsql_cmd += "\nAND (\n\t[j].[name] = '%s'" % (args.job.split(',')[0].strip())
-
     if len(args.job.split(',')) > 1:
         for x in args.job.split(',')[1:]:
             tsql_cmd += "\n\tOR [j].[name] = '%s'" % (x.strip())
-
     tsql_cmd += "\n)"
-
 elif args.exclude:
     for x in args.exclude.split(','):
         tsql_cmd += "\nAND [j].[name] != '%s'" % (x.strip())
