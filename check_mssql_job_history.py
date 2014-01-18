@@ -19,23 +19,25 @@ def nagios_exit(return_code, msg):
     print "%s - %s" % (return_code, msg)
     sys.exit(nagios_retcodes[return_code])
 
-    
+ 
 def run_datetime(run_date, run_time):
     run_date = str(run_date)
-    run_time = str("%06d" % (int(run_time)))
-
     run_year   = run_date[0:4]
     run_month  = run_date[4:6]
     run_day    = run_date[6:8]
+
+    run_time = str("%06d" % (int(run_time)))
     run_hour   = run_time[0:2]
     run_minute = run_time[2:4]
     run_second = run_time[4:6]
 
-    return "%s/%s/%s %s:%s:%s" % (run_month, run_day, run_year, run_hour, run_minute, run_second)
+    return "%s/%s/%s %s:%s:%s" % (
+        run_month, run_day, run_year,
+        run_hour, run_minute, run_second)
 
 
 parser = argparse.ArgumentParser(
-             description="Check a SQL Server for failed jobs - results based on state of last run for all jobs or for a specific job if specified")
+             description = "Check a SQL Server for failed jobs - results based on state of last run for all jobs or for a specific job if specified")
 parser.add_argument("-t", "--timeout",
                     action = "store",
                     type = int, 
