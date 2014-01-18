@@ -97,35 +97,35 @@ parser.add_argument("-v", "--verbose",
                     action = "store_true",
                     help = "This shows the Transaction SQL code that will be executed to help debug",
                     dest = "verbose")
-results = parser.parse_args()
+args = parser.parse_args()
 
-connect_host = results.host
-if results.port != 1433:
-    connect_host += ":%s" % (str(results.port))
+connect_host = args.host
+if args.port != 1433:
+    connect_host += ":%s" % (str(args.port))
 
 try:
     conn = pymssql.connect(
-               user = results.user,
-               password = results.password,
+               user = args.user,
+               password = args.password,
                host = connect_host,
-               timeout = results.query_timeout,
-               login_timeout = results.timeout)
+               timeout = args.query_timeout,
+               login_timeout = args.timeout)
 except:
     nagios_exit("UNKNOWN", "Unable to connect to SQL Server")
 
 cur = conn.cursor()
 
-if results.list_jobs:
+if args.list_jobs:
     tsql_cmd = """ SELECT [name], [enabled]
     FROM [msdb]..[sysjobs]"""
 
-    if results.verbose:
+    if args.verbose:
         print "%s\n" % (tsql_cmd)
 
     cur.execute(tsql_cmd)
     rows = cur.fetchall()
 
-    print "Jobs on %s" % (results.host)
+    print "Jobs on %s" % (args.host)
     print "\"-\" at the begining means the job is disabled\n"
 
     for row in rows:
@@ -146,20 +146,20 @@ INNER JOIN (
 WHERE [j].[enabled] = 1
 AND [h].[run_status] = 0"""
 
-if results.job:
-    tsql_cmd += "\nAND (\n\t[j].[name] = '%s'" % (results.job.split(',')[0].strip())
+if args.job:
+    tsql_cmd += "\nAND (\n\t[j].[name] = '%s'" % (args.job.split(',')[0].strip())
 
-    if len(results.job.split(',')) > 1:
-        for x in results.job.split(',')[1:]:
+    if len(args.job.split(',')) > 1:
+        for x in args.job.split(',')[1:]:
             tsql_cmd += "\n\tOR [j].[name] = '%s'" % (x.strip())
 
     tsql_cmd += "\n)"
 
-elif results.exclude:
-    for x in results.exclude.split(','):
+elif args.exclude:
+    for x in args.exclude.split(','):
         tsql_cmd += "\nAND [j].[name] != '%s'" % (x.strip())
 
-if results.verbose:
+if args.verbose:
     print "%s\n" % (tsql_cmd)
 
 cur.execute(tsql_cmd)
@@ -174,11 +174,11 @@ else:
         failed_stats += "%s last run at %s, " % (row[0], run_datetime(row[1], row[2]))
     failed_stats = failed_stats.rstrip(', ')
 
-    if rowcount >= results.warning and rowcount < results.critical:
+    if rowcount >= args.warning and rowcount < args.critical:
         nagios_exit("WARNING", failed_stats)
-    elif rowcount < results.warning:
+    elif rowcount < args.warning:
         nagios_exit("OK", "%d failed jobs is below the warning count specified." % (rowcount))
-    elif rowcount >= results.critical:
+    elif rowcount >= args.critical:
         nagios_exit("CRITICAL", failed_stats)
     else:
         nagios_exit(3, "This should never appear")
