@@ -97,7 +97,12 @@ parser.add_argument("-v", "--verbose",
                     action = "store_true",
                     help = "This shows the Transaction SQL code that will be executed to help debug",
                     dest = "verbose")
+
 args = parser.parse_args()
+
+if args.warning >= args.critical:
+    nagios_exit("UNKNOWN",
+                "Usage error: the warning threshold is greater than the critical one")
 
 connect_host = args.host
 if args.port != 1433:
@@ -171,9 +176,9 @@ else:
         failed_stats += "%s last run at %s, " % (row[0], run_datetime(row[1], row[2]))
     failed_stats = failed_stats.rstrip(', ')
 
-    if rowcount >= args.warning and rowcount < args.critical:
-        nagios_exit("WARNING", failed_stats)
-    elif rowcount < args.warning:
+    if rowcount < args.warning:
         nagios_exit("OK", "%d failed jobs is below the warning count specified." % (rowcount))
+    elif rowcount >= args.warning and rowcount < args.critical:
+        nagios_exit("WARNING", failed_stats)
     elif rowcount >= args.critical:
         nagios_exit("CRITICAL", failed_stats)
