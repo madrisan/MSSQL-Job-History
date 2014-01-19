@@ -9,17 +9,39 @@
 # as allowing you to specify a single job to check which will return
 # OK|CRITICAL for that job alone.
 
-import sys
+import sys, os
 import argparse
 import pymssql
 
+historyPath = "/var/tmp/check_mssql_job_history"
 nagios_retcodes = { "OK": 0, "WARNING": 1, "CRITICAL": 2, "UNKNOWN": 3 }
 
-def nagios_exit(return_code, msg):
-    print "%s - %s" % (return_code, msg)
-    sys.exit(nagios_retcodes[return_code])
+def nagios_exit(exit_code, msg):
+    if args.history:
+        try:
+            fname = os.path.join(historyPath, args.host)
+            if not os.path.exists(historyPath):
+                os.mkdir(historyPath)
+            if not os.path.exists(fname): open(fname, 'w').close()
 
- 
+            f = open(fname, 'r+')
+            previous_msg = f.readline()
+            if previous_msg == msg:
+                if exit_code in [ "WARNING", "CRITICAL" ]:
+                    # do not notify, the message is the same
+                    msg += " (already notified)"
+                    exit_code = "OK"
+            else:
+                f.truncate(0)
+                f.write(msg)
+            f.close()
+        except IOError:
+            pass
+
+    print "%s: %s" % (exit_code, msg)
+    sys.exit(nagios_retcodes[exit_code])
+
+
 def run_datetime(run_date, run_time):
     run_date = str(run_date)
     run_year   = run_date[0:4]
@@ -91,6 +113,10 @@ parser.add_argument("-x", "--exclude",
                     action = "store",
                     help = "A comma seperated list of jobs not to check",
                     dest = "exclude");
+parser.add_argument("--history",
+                    action = "store_true",
+                    help = "Create a history of the notifications to avoid duplicate alerts",
+                    dest = "history")
 parser.add_argument("-l", "--list",
                     action = "store_true",
                     help = "This will list all jobs in on your server. This does not return a nagios check and is used for setup and debugging",
