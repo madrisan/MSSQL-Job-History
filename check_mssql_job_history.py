@@ -102,16 +102,16 @@ parser.add_argument("-U", "--user",
                     dest = "user")
 parser.add_argument("-P", "--password",
                     action = "store",
-                    help = "Password to for user you are authenticating as",
+                    help = "Password of the user you are authenticating as",
                     required = True,
                     dest = "password")
 parser.add_argument("-j", "--job",
                     action = "store",
-                    help = "A comma seperate list of jobs to check instead of all enabled jobs",
+                    help = "A comma-separated list of jobs to check instead of all enabled jobs",
                     dest = "job");
 parser.add_argument("-x", "--exclude",
                     action = "store",
-                    help = "A comma seperated list of jobs not to check",
+                    help = "A comma-separated list of jobs not to check",
                     dest = "exclude");
 parser.add_argument("--history",
                     action = "store_true",
