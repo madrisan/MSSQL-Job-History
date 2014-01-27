@@ -32,8 +32,9 @@ def nagios_exit(exit_code, msg):
                     msg += " (already notified)"
                     exit_code = "OK"
             else:
-                f.truncate(0)
+                f.seek(0)
                 f.write(msg)
+                f.truncate()
             f.close()
         except IOError:
             pass
