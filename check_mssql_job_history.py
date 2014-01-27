@@ -59,7 +59,7 @@ def run_datetime(run_date, run_time):
 
 
 parser = argparse.ArgumentParser(
-             description = "Check a SQL Server for failed jobs - results based on state of last run for all jobs or for a specific job if specified")
+             description = "Check a SQL Server for failed and canceled jobs - results based on state of last run for all jobs or for a specific job if specified")
 parser.add_argument("-t", "--timeout",
                     action = "store",
                     type = int, 
@@ -75,13 +75,13 @@ parser.add_argument("--query-timeout",
 parser.add_argument("-w", "--warning",
                     action = "store",
                     type = int,
-                    help = "Failed jobs before a warning alert is generated",
+                    help = "Number of failed/canceled jobs that will trigger a warning alert",
                     default = "0",
                     dest = "warning")
 parser.add_argument("-c", "--critical",
                     action = "store",
                     type = int,
-                    help ="Failed jobs before a critical alert is generated",
+                    help = "Number of failed/canceled jobs that will trigger a critical alert",
                     default = "1",
                     dest = "critical")
 parser.add_argument("-H", "--host",
@@ -177,7 +177,9 @@ INNER JOIN (
     GROUP BY [job_id]
 ) [tmp_sjh] ON [h].[job_id] = [tmp_sjh].[job_id] AND [h].[instance_id] = [tmp_sjh].[max_instance_id]
 WHERE [j].[enabled] = 1
-AND [h].[run_status] = 0"""
+AND ( [h].[run_status] = 0 -- job failed
+      OR [h].[run_status] = 3 -- job canceled
+)"""
 
 if args.job:
     tsql_cmd += "\nAND (\n\t[j].[name] = '%s'" % (args.job.split(',')[0].strip())
@@ -199,13 +201,13 @@ rowcount = cur.rowcount
 if rowcount == 0:
     nagios_exit("OK", "All jobs completed successfully on their last run")
 else:
-    failed_stats = "Number of failed jobs: %d - Failed Jobs: " % (rowcount)
+    failed_stats = "%d failed or canceled jobs: " % (rowcount)
     for row in rows:
         failed_stats += "%s last run at %s, " % (row[0], run_datetime(row[1], row[2]))
     failed_stats = failed_stats.rstrip(', ')
 
     if rowcount < args.warning:
-        nagios_exit("OK", "%d failed jobs is below the warning count specified." % (rowcount))
+        nagios_exit("OK", "%d failed or canceled jobs but below the warning threshold" % (rowcount))
     elif rowcount >= args.warning and rowcount < args.critical:
         nagios_exit("WARNING", failed_stats)
     elif rowcount >= args.critical:
